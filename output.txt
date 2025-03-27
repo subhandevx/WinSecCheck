@@ -1,0 +1,19 @@
+ Based on the statuses provided, several services are currently stopped:
+
+1. edgeupdate
+2. GameInput Service
+3. GoogleUpdaterInternalService136.0.7079.0
+4. GoogleUpdaterService136.0.7079.0
+5. gpsvc
+6. Intel(R) TPM Provisioning Service
+7. IntelAudioService
+8. InventorySvc
+9. LocalKdc
+10. MapsBroker
+11. sppsvc
+12. WslInstaller
+
+To diagnose the issue, you may want to check system logs for any error messages related to these services. Additionally, you can try restarting these services one by one or reboot your device to ensure they are functioning correctly.
+
+As a recommendation, consider performing regular maintenance tasks on your device to keep it running smoothly. This may include updating applications, clearing unnecessary files, and monitoring system resources such as disk space and RAM usage. If the issue persists, you might want to seek assistance from technical support or consult online forums related to your specific operating system.
+
