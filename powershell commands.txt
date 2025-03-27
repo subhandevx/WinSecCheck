@@ -1,0 +1,55 @@
+1. Check Windows Defender Status:
+Command:
+Get-MpComputerStatus | Select-Object AMRunningMode, AntivirusEnabled, RealTimeProtectionEnabled
+
+Why?
+Ensures Windows Defender is running and protecting the system.
+
+2. List Unauthorized Running Services:
+Command:
+Get-Service | Where-Object { $_.StartType -eq 'Auto' -and $_.Status -ne 'Running' } | Select-Object Name, Status
+
+Why?
+Identifies services that should be running but aren't, which may indicate misconfigurations or tampering.
+
+3. Audit Failed Login Attempts (Last 10):
+Command:
+Get-EventLog -LogName Security -InstanceId 4625 -Newest 10 | Select-Object TimeGenerated, Message | Select-Object -ExpandProperty Message
+
+Why?
+Detects brute-force attempts or unauthorized login attempts.
+
+4. Check Installed Patches & Security Updates:
+Command:
+Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object InstalledOn, Description, HotFixID | Select-Object -First 10
+
+Why?
+Ensures the system is up to date with the latest security patches.
+
+5. Scan for Open Ports & Running Processes:
+Command:
+Get-NetTCPConnection | Where-Object { $_.State -eq "Listen" } | Select-Object LocalAddress, LocalPort, OwningProcess
+
+Why?
+Identifies open ports that could be exploited and links them to running processes.
+
+6. Check Firewall Rules:
+Command:
+Get-NetFirewallRule | Select-Object DisplayName, Enabled, Action | Where-Object { $_.Enabled -eq 'True' }
+
+Why?
+Verifies that critical firewall rules are in place and enabled.
+
+7. Check Active Network Connections:
+Command:
+Get-NetConnectionProfile | Select-Object Name, InterfaceAlias, IPv4Address, NetworkCategory
+
+Why?
+Identifies network connections that could expose the system to threats.
+
+8. Identify Non-Admin Users in Admin Group:
+Command:
+Get-LocalGroupMember -Group "Administrators" | Where-Object { $_.Name -notin (Get-LocalGroupMember -Group "Administrators" | Where-Object { $_.PrincipalSource -eq "Local" }).Name } | Select-Object Name, PrincipalSource
+
+Why?
+Detects unauthorized admin access.

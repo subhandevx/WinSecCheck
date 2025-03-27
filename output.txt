@@ -1,0 +1,26 @@
+ Based on the services that are currently stopped, here's a summary of their status and potential recommendations:
+
+1. dmwappushservice - No known issues or recommendations. This is likely a third-party app service.
+
+2. edgeupdate - This is an Edge browser update service. If you don't have Microsoft Edge installed, 
+it's normal for this service to be stopped. Otherwise, ensure your browser is updated.
+
+3. GameInput Service - Depending on your system and if you use specific game software, this could be related. 
+Check for any associated game software updates or try reinstalling the game.
+
+4. GoogleUpdaterInternalService136.0.7079.0 & GoogleUpdaterService136.0.7079.0 - These are Google Chrome updaters. 
+Ensure your browser is updated and functioning correctly.
+
+5. Intel(R) TPM Provisioning Service, IntelAudioService - These are hardware-related services provided by Intel. 
+If you have recently replaced or upgraded any Intel hardware components, try reinstalling the necessary drivers.
+
+6. InventorySvc - This is a system service used for maintaining the system inventory. Restarting your computer may help resolve potential issues.
+
+7. LocalKdc - This is a part of the Kerberos authentication system. If you are experiencing network or authentication-related issues, try restarting the machine.
+
+8. MapsBroker - This is a Google Maps service. Ensure your Google services are up and running, or try reinstalling Google Maps.
+
+9. sppsvc - This is a Bluetooth-related service. If you have recently disconnected or changed any Bluetooth devices, try resetting or reconnecting them to see if this resolves the issue.
+
+10. WslInstaller - This is related to Windows Subsystem for Linux. If you don't use WSL, it may be safe to stop the service. Otherwise, ensure your installation is up-to-date and functioning properly.
+
