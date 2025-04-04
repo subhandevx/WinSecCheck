@@ -1,82 +1,102 @@
 import subprocess
 import os
-from flask import Flask, render_template, send_file
+import time
+from flask import Flask, render_template
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 
-def run_command_and_get_output(cmd):
-    """Runs the given command in PowerShell and returns the output."""
-    try:
-        result = subprocess.run(
-            ["powershell", "-Command", cmd],
-            capture_output=True,
-            text=True
-        )
+# Create output directory
+output_dir = "outputs"
+os.makedirs(output_dir, exist_ok=True)
 
-        if result.returncode == 0:
-            return result.stdout
-        else:
-            print(f"Command error: {result.stderr}")
-            return None
+# Define output files
+output_files = {
+    "defender_status": os.path.join(output_dir, "defender_status.txt"),
+    "audit_policy": os.path.join(output_dir, "audit_policy.txt")
+}
+
+result_files = {
+    "defender_status": os.path.join(output_dir, "mistral_defender.txt"),
+    "audit_policy": os.path.join(output_dir, "mistral_audit.txt")
+}
+
+# ✅ Ensure all output files exist before execution
+for file in list(output_files.values()) + list(result_files.values()):
+    if not os.path.exists(file):
+        open(file, "w").close()  # Create an empty file
+
+# Define PowerShell commands
+commands = {
+    "defender_status": 'powershell -ExecutionPolicy Bypass -NoProfile -Command "Get-MpComputerStatus | Select-Object AntivirusEnabled, RealTimeProtectionEnabled, DefenderSignaturesOutOfDate, AntivirusSignatureLastUpdated, RebootRequired"',
+    "audit_policy": 'powershell -ExecutionPolicy Bypass -NoProfile -Command "auditpol /get /category:*"'
+}
+
+# Run PowerShell command
+def run_powershell_command(cmd, file_name):
+    try:
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8')
+        # Format output with proper line breaks for readability
+        formatted_output = result.stdout.replace("\n", "\n<br>")  # Add <br> for HTML line breaks
+        with open(file_name, "w", encoding="utf-8") as file:
+            file.write(formatted_output)
     except Exception as e:
-        print(f"Error running command: {e}")
-        return None
+        print(f"PowerShell error: {e}")
 
-def run_ollama_with_prompt(output_from_cmd):
-    """Passes the output from PowerShell to Mistral via Ollama and returns the result."""
+# Function to run Mistral after ensuring the file exists
+def run_mistral(output_file, result_file, prompt):
+    time.sleep(2)  # Small delay to ensure PowerShell writes output
+
     try:
-        # Prepare the full prompt to send to Mistral
-        full_prompt = f"{output_from_cmd}\n\n tell pin point status, one point of recommendation if any"
-        
+        with open(output_file, "r", encoding="utf-8", errors="ignore") as file:
+            output_from_cmd = file.read()
+
+        full_prompt = f"{output_from_cmd}\n\n{prompt}"
+
         result = subprocess.run(
             ["ollama", "run", "mistral", full_prompt],
             capture_output=True,
-            text=True
+            text=True,
+            encoding='utf-8'
         )
-        
-        if result.returncode == 0:
-            return result.stdout
-        else:
-            print(f"Mistral command error: {result.stderr}")
-            raise Exception("Error running Mistral.")
-    
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
 
-def save_output_to_file(output, filename="output.txt"):
-    """Saves the output from Mistral to a file."""
-    try:
-        with open(filename, "w") as file:
-            file.write(output)
-        print(f"Output saved to {filename}")
+        with open(result_file, "w", encoding="utf-8") as file:
+            file.write(result.stdout)
+
     except Exception as e:
-        print(f"Error saving file: {e}")
+        print(f"Mistral error: {e}")
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
-@app.route('/run_command', methods=['POST'])
-def run_and_display_output():
-    """Handles running the command and displaying the output on the page."""
-    # PowerShell command to run
-    cmd = "Get-Service | Where-Object { $_.StartType -eq 'Auto' -and $_.Status -ne 'Running' } | Select-Object Name, Status | Format-Table -AutoSize"
+@app.route('/security_posture')
+def security_posture():
+    # Run PowerShell commands in parallel
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        executor.submit(run_powershell_command, commands["defender_status"], output_files["defender_status"])
+        executor.submit(run_powershell_command, commands["audit_policy"], output_files["audit_policy"])
 
-    # Step 1: Run the PowerShell command and get the output
-    output_from_cmd = run_command_and_get_output(cmd)
-    if output_from_cmd is None:
-        return "No output from PowerShell command."
+    time.sleep(3)  # Wait for PowerShell output before running Mistral
 
-    # Step 2: Pass the output to Mistral and get the result
-    mistral_output = run_ollama_with_prompt(output_from_cmd)
-    if mistral_output is None:
-        return "No output from Mistral."
+    # Sensible prompt to check the system security posture
+    mistral_prompts = {
+        "defender_status": "4 lines output Based on the results of the Defender status and antivirus settings, assess the system's security health. If any settings are not optimal or the antivirus signatures are outdated, tell specifically.",
+        "audit_policy": "4 lines output Based on the output of the auditing policy, identify if any security auditing configurations are missing or require attention. Suggest specific changes for improving security monitoring."
+    }
 
-    # Step 3: Save the final output to a file
-    save_output_to_file(mistral_output)
+    # Run Mistral in parallel
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        executor.submit(run_mistral, output_files["defender_status"], result_files["defender_status"], mistral_prompts["defender_status"])
+        executor.submit(run_mistral, output_files["audit_policy"], result_files["audit_policy"], mistral_prompts["audit_policy"])
 
-    return render_template('output.html', output=mistral_output)
+    # Read and display results
+    outputs = {}
+    for key in result_files:
+        with open(result_files[key], "r", encoding="utf-8", errors="ignore") as file:
+            outputs[key] = file.read()
+
+    return render_template('output.html', output=outputs)
 
 if __name__ == "__main__":
     app.run(debug=True)

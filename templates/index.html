@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Service Check</title>
+    <title>System Dashboard</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
     <div class="container">
-        <h1 class="mt-5">Service Status Check</h1>
-        <form action="/run_command" method="POST">
-            <button type="submit" class="btn btn-primary mt-3">GO</button>
-        </form>
+        <h1 class="mt-5">Welcome to Your System Dashboard</h1>
+        <div class="mt-5">
+            <a href="/security_posture" class="btn btn-primary btn-lg mt-3">My Security Posture</a>
+        </div>
+        <div class="mt-3">
+            <a href="/system_monitoring" class="btn btn-info btn-lg mt-3">My System Monitoring Report</a>
+        </div>
     </div>
 </body>
 </html>

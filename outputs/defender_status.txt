@@ -1,0 +1,11 @@
+
+<br>
+<br>AntivirusEnabled              : True
+<br>RealTimeProtectionEnabled     : True
+<br>DefenderSignaturesOutOfDate   : False
+<br>AntivirusSignatureLastUpdated : 03-04-2025 15:07:31
+<br>RebootRequired                : False
+<br>
+<br>
+<br>
+<br>
